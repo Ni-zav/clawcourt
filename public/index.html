@@ -1,63 +1,260 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#080e1b"><title>ClawCourt — Evidence over claims</title>
-<style>
-:root{color-scheme:dark;--bg:#080d18;--panel:#101929;--panel2:#131f32;--line:#29334a;--ink:#eff4ff;--muted:#96a5be;--lime:#b6fe67;--cyan:#61e5fa;--red:#ff8b9a;--yellow:#fdd17c;--violet:#b9a6ff}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(900px 480px at 67% -11%,#192c45 0,transparent 70%),radial-gradient(600px 320px at -5% 35%,#14203b 0,transparent 70%),var(--bg);min-height:100vh}button,select,input,textarea{font:inherit}button{cursor:pointer}a{color:var(--cyan)}
-.app{min-height:100vh;display:grid;grid-template-columns:235px minmax(0,1fr)}.sidebar{border-right:1px solid #202a3a;background:#0a101dcc;padding:27px 18px;display:flex;flex-direction:column;gap:32px;position:sticky;top:0;height:100vh}.brand{display:flex;gap:12px;align-items:center;padding:0 10px}.seal{width:41px;height:41px;border-radius:13px;background:linear-gradient(142deg,#b6fe67,#69d8ed);color:#11222b;display:grid;place-items:center;font-size:25px;font-weight:900;box-shadow:0 0 25px #b6fe6730}.brand strong{font-size:20px;letter-spacing:-.7px}.brand span{display:block;color:var(--muted);font-size:10px;letter-spacing:2px;margin-top:1px}.navlabel{font-size:10px;font-weight:800;color:#6d7c99;letter-spacing:2px;margin:0 12px 13px}.navitem{display:flex;gap:13px;align-items:center;padding:13px 14px;border-radius:12px;color:#9eacc2;margin-bottom:5px;font-size:13px}.navitem.active{background:#1a283a;color:var(--lime);font-weight:800}.navitem svg{width:18px;height:18px}.sidefoot{margin-top:auto;padding:15px;border:1px solid var(--line);border-radius:16px;background:#101a2b}.eyebrow{font-size:10px;letter-spacing:2.4px;text-transform:uppercase;font-weight:900;color:var(--cyan)}.sidefoot h4{font-size:14px;margin:10px 0 5px}.sidefoot p{font-size:12px;color:var(--muted);line-height:1.6;margin:0}.sidefoot .mini{margin-top:13px;color:var(--lime);font-weight:800;font-size:11px}.main{padding:40px clamp(24px,4.2vw,72px) 60px;max-width:1610px;width:100%;margin:auto}.topline{display:flex;justify-content:space-between;gap:16px;align-items:center;color:var(--muted);font-size:12px;margin-bottom:42px}.livepill{border:1px solid #39504a;color:var(--lime);background:#17251e;border-radius:100px;font-size:11px;padding:8px 12px;letter-spacing:.5px;font-weight:800}.circle{width:7px;height:7px;border-radius:99px;background:var(--lime);display:inline-block;margin-right:6px;box-shadow:0 0 8px #b6fe67}.hero{display:flex;justify-content:space-between;gap:30px;align-items:center;margin-bottom:36px}.hero h1{font-size:clamp(36px,4.6vw,68px);max-width:790px;letter-spacing:-3px;line-height:1.04;margin:12px 0 18px;font-weight:850}.hero h1 em{font-style:normal;color:var(--lime)}.hero p{color:#abbbd2;font-size:15px;line-height:1.75;margin:0;max-width:610px}.heroicon{flex:0 0 178px;width:178px;height:178px;border-radius:40px;border:1px solid #324757;background:linear-gradient(140deg,#1f3a43,#0d1a2c);display:grid;place-items:center;font-size:82px;transform:rotate(6deg);box-shadow:0 20px 80px #0d0e203c,inset 0 0 50px #c4ff7310}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:26px}.stat{padding:20px 22px;border:1px solid var(--line);border-radius:17px;background:#10192ab5;min-height:107px}.stat small{font-size:11px;color:var(--muted);display:block;font-weight:700}.stat strong{font-size:30px;letter-spacing:-1px;display:block;margin-top:8px}.stat strong.green{color:var(--lime)}.stat strong.red{color:var(--red)}.content{display:grid;grid-template-columns:minmax(420px,1.1fr) minmax(330px,.9fr);gap:20px;align-items:start}.panel{border:1px solid var(--line);border-radius:20px;background:linear-gradient(150deg,#132034,#0e1827);box-shadow:0 16px 55px #03070c40;min-width:0;overflow:hidden}.panelpad{padding:28px}.section-title{font-weight:850;letter-spacing:-.6px;font-size:20px;margin:0}.muted{color:var(--muted)}.sectionhint{font-size:12px;color:var(--muted);line-height:1.6;margin:9px 0 23px}.step{display:flex;align-items:center;gap:12px;font-size:12px;font-weight:800;letter-spacing:.2px;margin-bottom:13px}.step span{width:24px;height:24px;display:grid;place-items:center;border-radius:7px;background:#263a42;color:var(--lime)}.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:23px}.mode{position:relative;padding:13px 8px 12px;border:1px solid #34415a;background:#131f32;border-radius:12px;text-align:center;color:#b2c2d7;min-height:80px}.mode strong{font-size:12px;display:block;margin:6px 0}.mode small{font-size:10px;color:#8494b1;display:block}.mode.selected{color:var(--lime);background:#1d3035;border-color:#8ac66a;box-shadow:inset 0 0 0 1px #8ac66a44}.mode.selected small{color:#b7c9ab}label{display:block;color:#bdc9db;font-size:12px;font-weight:750;margin:17px 0 8px}textarea,input,select{width:100%;background:#0b1423;color:#e7f1ff;border:1px solid #34425b;border-radius:11px;outline:none;padding:12px 14px;transition:border-color .2s;min-height:43px}textarea:focus,input:focus,select:focus{border-color:#9ade75}textarea{resize:vertical;min-height:105px;line-height:1.55;font-size:13px}.rowinputs{display:grid;grid-template-columns:1fr 1fr;gap:12px}.action{width:100%;padding:17px 20px;border:0;border-radius:12px;margin-top:23px;font-weight:900;letter-spacing:.1px;background:var(--lime);color:#0b1b18;font-size:14px;box-shadow:0 8px 25px #b6fe6721;transition:transform .2s,filter .2s}.action:hover{filter:brightness(1.1);transform:translateY(-1px)}.action:disabled{opacity:.6;cursor:wait}.warning{display:flex;gap:10px;padding:11px 12px;border-radius:10px;border:1px solid #5f4f33;background:#2b241f;color:#f8d798;font-size:11px;line-height:1.6;margin-top:14px}.receipt-head{background:#101d2d;border-bottom:1px solid var(--line);padding:25px 27px;display:flex;justify-content:space-between;align-items:start}.receipt-head p{font-size:12px;color:var(--muted);margin:7px 0 0}.pill{border:1px solid #3c5271;background:#1d3042;color:#c9dbeb;border-radius:100px;font-size:10px;padding:6px 11px;letter-spacing:.5px;font-weight:900;white-space:nowrap}.verdict{padding:27px 27px 22px;border-bottom:1px solid #2a3445}.verdict .verdictlabel{font-size:10px;letter-spacing:2.2px;color:#899bb3;font-weight:850}.verdict h3{font-size:34px;line-height:1.05;letter-spacing:-1.3px;margin:10px 0 11px}.verdict h3.verified{color:var(--lime)}.verdict h3.unverified{color:var(--red)}.verdict h3.agent_failed{color:var(--yellow)}.verdict h3.idle{color:#a4b2c6}.verdict p{color:var(--muted);font-size:12px;line-height:1.65;margin:0}.evidence{padding:23px 27px}.evidence h4{font-size:13px;letter-spacing:1px;margin:0 0 16px;text-transform:uppercase}.check{display:flex;gap:11px;border-bottom:1px solid #263246;padding:11px 0}.check:last-child{border-bottom:0}.checkmark{flex:none;width:23px;height:23px;border-radius:8px;display:grid;place-items:center;background:#30432d;color:var(--lime);font-size:14px;font-weight:900}.checkmark.fail{color:var(--red);background:#482d3b}.check strong{font-size:12px;display:block;margin-top:2px;line-height:1.5}.check small{display:block;color:#889bb7;margin:6px 0 0;font-size:10px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:100px;overflow:auto;line-height:1.5}.agentbox{margin:0 27px 25px;border:1px solid #30445b;border-radius:12px;padding:16px;background:#0d1726}.agentbox small{color:#8eabc9;font-size:10px;font-weight:800;letter-spacing:1px}.agentbox p{font-size:12px;line-height:1.65;color:#cad7e8;white-space:pre-wrap;overflow-wrap:anywhere;margin:10px 0}.meta{font-size:10px;color:#889bb6;line-height:1.7}.receipt-actions{display:flex;gap:9px;padding:0 27px 25px}.quietbtn{background:#1b2c41;border:1px solid #3a4a65;color:#dbe6f6;padding:11px 14px;border-radius:9px;font-size:11px;font-weight:800}.quietbtn:disabled{opacity:.4;cursor:default}.history{margin-top:28px}.history h2{font-size:19px;letter-spacing:-.5px}.history p{color:var(--muted);font-size:12px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:16px;background:#10192a;margin-top:16px}table{width:100%;border-collapse:collapse;font-size:12px}th{text-align:left;padding:16px 22px;color:#899ab4;text-transform:uppercase;letter-spacing:1px;font-size:10px}td{border-top:1px solid #263248;padding:17px 22px;color:#c8d5e8}tr.history-row{cursor:pointer}tr.history-row:hover{background:#1c3043}.tiny-verdict{font-weight:900;color:var(--lime)}.tiny-verdict.unverified{color:var(--red)}.tiny-verdict.agent_failed{color:var(--yellow)}.endnotes{display:flex;gap:15px;justify-content:space-between;color:#72839c;margin-top:30px;font-size:11px;line-height:1.6}.endnotes a{color:#a3b5ca}.toasty{position:fixed;bottom:20px;right:20px;background:#233a4b;border:1px solid #668f86;color:#d6f5ed;padding:14px 19px;border-radius:12px;font-size:13px;display:none;max-width:330px;z-index:20}
-@media(max-width:1150px){.sidebar{width:78px;padding:25px 12px}.app{grid-template-columns:78px 1fr}.brand strong,.brand span,.navlabel,.navitem span,.sidefoot{display:none}.brand{padding:0}.navitem{justify-content:center;padding:14px 0}.content{grid-template-columns:1fr 1fr}.heroicon{display:none}}
-@media(max-width:880px){.content{grid-template-columns:1fr}.hero h1{letter-spacing:-2px}.stats{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:620px){.app{display:block}.sidebar{position:static;height:auto;width:100%;flex-direction:row;padding:13px 20px;align-items:center;justify-content:space-between;border-right:0;border-bottom:1px solid #263044}.brand strong,.brand span{display:block}.navlabel,.sidebar nav,.sidefoot{display:none}.main{padding:25px 15px 40px}.topline{margin-bottom:30px}.hero{margin-bottom:25px}.hero h1{font-size:36px}.hero p{font-size:13px}.stat{padding:16px}.panelpad{padding:19px}.receipt-head,.evidence,.verdict{padding:20px}.agentbox{margin:0 20px 20px}.receipt-actions{padding:0 20px 20px}.modes{grid-template-columns:1fr 1fr 1fr}.mode{padding:9px 3px}.mode strong{font-size:11px}.mode small{font-size:9px}.rowinputs{grid-template-columns:1fr}.endnotes{flex-direction:column}}
-</style>
-</head>
-<body>
-<div class="app">
-<aside class="sidebar">
- <div class="brand"><div class="seal">⚖</div><div><strong>ClawCourt</strong><span>EVIDENCE FIRST</span></div></div>
- <nav><div class="navlabel">WORKSPACE</div><div class="navitem active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></div><div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span>Verification</span></div><div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16h16M8 14l4-4 4 3 4-6"/></svg><span>Run history</span></div></nav>
- <div class="sidefoot"><div class="eyebrow">THE PRINCIPLE</div><h4>Don't trust "done".</h4><p>An AI's response is a claim. Tests and file evidence are the proof.</p><div class="mini">● Local-first · Open source</div></div>
-</aside>
-<main class="main">
- <div class="topline"><span>OPENCLAW TOOLING <span style="padding:0 10px;color:#4d6279">/</span> INDEPENDENT VERIFICATION</span><span class="livepill"><span class="circle"></span> LOCAL SYSTEM ONLINE</span></div>
- <section class="hero"><div><div class="eyebrow">YOUR AGENT IS ON TRIAL</div><h1>The agent said <em>done.</em><br>We checked.</h1><p>Meet the independent acceptance layer for AI agents. Run a task, inspect what your agent claims, and let real tests decide if the work is actually finished.</p></div><div class="heroicon" aria-hidden="true">⚖️</div></section>
- <section class="stats"><div class="stat"><small>Total receipts</small><strong id="stat-total">0</strong></div><div class="stat"><small>Verified tasks</small><strong id="stat-pass" class="green">0</strong></div><div class="stat"><small>Unverified claims</small><strong id="stat-fail" class="red">0</strong></div><div class="stat"><small>Current workspace</small><strong style="font-size:17px;letter-spacing:0" id="stat-workspace">Loading…</strong></div></section>
- <div class="content">
-  <section class="panel"><div class="panelpad"><h2 class="section-title">New agent trial</h2><p class="sectionhint">Specify the task and the evidence that would make it genuinely complete. No API keys are needed for demo mode.</p>
-   <div class="step"><span>01</span> Choose execution mode</div>
-   <div class="modes" id="modes"><button type="button" class="mode selected" data-mode="demo-fail"><strong>⚠ False claim</strong><small>Offline simulation</small></button><button type="button" class="mode" data-mode="demo-pass"><strong>✓ Real fix</strong><small>Offline simulation</small></button><button type="button" class="mode" data-mode="openclaw"><strong>✦ OpenClaw</strong><small>Real agent harness</small></button></div>
-   <div class="step"><span>02</span> Define the job</div>
-   <label for="task">Agent task</label><textarea id="task" maxlength="3000">Fix incident #042 by changing its status to fixed. Do not claim success unless the file and tests verify the change.</textarea>
-   <div class="step" style="margin-top:25px"><span>03</span> Define acceptance evidence</div>
-   <div class="rowinputs"><div><label for="file">Target file (relative to workspace)</label><input id="file" value="incident.txt" maxlength="250" spellcheck="false"></div><div><label for="expected">Required content (exact match)</label><input id="expected" value="status=fixed" maxlength="3000" spellcheck="false"></div></div>
-   <label for="command">Independent verification command</label><select id="command"><option value="node_test">node --test</option><option value="none">File checks only</option><option value="npm_test">npm test</option><option value="npm_build">npm run build</option><option value="git_diff_check">git diff --check</option><option value="python_pytest">python -m pytest -q</option><option value="go_test">go test ./...</option><option value="cargo_test">cargo test</option></select>
-   <div class="warning"><span>ⓘ</span><span id="notice">Simulation mode is deliberately fake AI. This demo verifies actual file state; it does not use Kimi, Cerebras, or OpenClaw and is not a prize-eligible submission.</span></div>
-   <button class="action" id="run">⚖ &nbsp; Run agent + verify evidence &nbsp; →</button>
-  </div></section>
-  <section class="panel"><div class="receipt-head"><div><h2 class="section-title">Evidence receipt</h2><p>Independent of the agent's words</p></div><span class="pill" id="kind">AWAITING RUN</span></div>
-   <div class="verdict"><div class="verdictlabel">COURT VERDICT</div><h3 id="verdict" class="idle">NOT YET JUDGED</h3><p id="verdict-detail">Start a trial to compare agent claims with independently checked evidence.</p></div>
-   <div class="evidence"><h4 id="evidence-title">Acceptance checklist</h4><div id="checks"><div class="check"><div class="checkmark">○</div><div><strong>Target file exists</strong><small>Not checked yet</small></div></div><div class="check"><div class="checkmark">○</div><div><strong>Required content is present</strong><small>Not checked yet</small></div></div><div class="check"><div class="checkmark">○</div><div><strong>Independent test command passes</strong><small>Not checked yet</small></div></div></div></div>
-   <div class="agentbox"><small>AGENT STATEMENT ≠ VERIFIED RESULT</small><p id="agent-text">Agent response will appear here after execution.</p><div class="meta" id="agent-meta">Provider: — &nbsp; Model: — &nbsp; Duration: —</div><div class="meta" id="file-change" style="margin-top:8px">File fingerprint: awaiting run</div></div>
-   <div class="receipt-actions"><button class="quietbtn" id="download" disabled>↓ Export JSON receipt</button><button class="quietbtn" id="copy" disabled>⎘ Copy summary</button></div>
-  </section>
- </div>
- <section class="history"><h2>Case history</h2><p>Every run leaves a local record. Click a case to reopen its evidence.</p><div class="tablewrap"><table><thead><tr><th>Case</th><th>Execution</th><th>Verdict</th><th>Checks</th><th>Date</th></tr></thead><tbody id="history"><tr><td colspan="5" style="color:#879cb7">No evidence receipts yet. Run your first trial above.</td></tr></tbody></table></div></section>
- <div class="endnotes"><span>ClawCourt v0.1 · Local-only demo · Real OpenClaw integration requires your configured CLI. <strong style="color:#a9bad1">No simulated claims presented as real.</strong></span><span><a href="https://docs.openclaw.ai/cli/agent" target="_blank" rel="noopener noreferrer">OpenClaw documentation</a> · <a href="https://github.com/openclaw/openclaw" target="_blank" rel="noopener noreferrer">OpenClaw GitHub</a></span></div>
-</main>
-</div><div id="toast" class="toasty" role="status"></div>
-<script>
-const $=id=>document.getElementById(id);let mode='demo-fail',current=null,runs=[];
-const esc=x=>String(x??'').replace(/[&<>"']/g,a=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[a]));
-function toast(t){const el=$('toast');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',4300)}
-function formatDate(x){try{return new Date(x).toLocaleString()}catch{return x}}
-function updateStats(){ $('stat-total').textContent=runs.length; $('stat-pass').textContent=runs.filter(x=>x.verdict==='verified').length; $('stat-fail').textContent=runs.filter(x=>x.verdict==='unverified').length; }
-function renderHistory(){const root=$('history');root.innerHTML=runs.length?runs.map(r=>`<tr class="history-row" data-id="${esc(r.id)}"><td><strong>#${esc(r.id.slice(0,8))}</strong></td><td>${r.agent.simulated?'SIMULATED':'OPENCLAW'}</td><td class="tiny-verdict ${esc(r.verdict)}">${esc(r.verdict.replace('_',' ').toUpperCase())}</td><td>${r.acceptance.count}/${r.acceptance.total}</td><td>${esc(formatDate(r.started))}</td></tr>`).join(''):'<tr><td colspan="5" style="color:#879cb7">No evidence receipts yet. Run your first trial above.</td></tr>';root.querySelectorAll('tr[data-id]').forEach(row=>row.onclick=()=>{const found=runs.find(r=>r.id===row.dataset.id);if(found){showReceipt(found);window.scrollTo({top:0,behavior:'smooth'})}})}
-function showReceipt(run){current=run;const label=run.verdict==='verified'?'VERIFIED':run.verdict==='unverified'?'UNVERIFIED':'AGENT FAILED';$('verdict').className=run.verdict;$('verdict').textContent=label;$('verdict-detail').textContent=run.verdict==='verified'?'All configured independent checks passed. This is evidence for the listed criteria, not a guarantee of full correctness.':run.verdict==='unverified'?'Agent execution completed, but one or more independent checks failed. The task is NOT accepted.':'The OpenClaw/agent execution did not finish successfully. Any passing checks do not override this.';$('kind').textContent=run.agent.simulated?'SIMULATED — NO AI':'REAL OPENCLAW';$('evidence-title').textContent=`Independent acceptance · ${run.acceptance.count}/${run.acceptance.total}`;$('checks').innerHTML=run.acceptance.results.map(c=>`<div class="check"><div class="checkmark ${c.passed?'':'fail'}">${c.passed?'✓':'×'}</div><div><strong>${esc(c.label)}</strong><small>${esc(c.detail)}</small></div></div>`).join('');$('agent-text').textContent=run.agent.answer || run.agent.error || 'No agent message captured';$('agent-meta').textContent=`Provider: ${run.agent.provider||'unknown'}   •   Model: ${run.agent.model||'default'}   •   Duration: ${run.agent.durationMs??0}ms`; $('file-change').textContent = run.evidenceChange ? `File changed in run: ${run.evidenceChange.changed ? 'YES':'NO'}   •   SHA-256: ${(run.evidenceChange.before.sha256||'missing').slice(0,10)} → ${(run.evidenceChange.after.sha256||'missing').slice(0,10)}` : 'File change: not recorded'; $('download').disabled=false;$('copy').disabled=false;}
-function switchMode(next){mode=next;document.querySelectorAll('.mode').forEach(el=>el.classList.toggle('selected',el.dataset.mode===mode));const demo=mode!=='openclaw';$('file').disabled=demo;$('expected').disabled=demo;$('command').disabled=false;if(demo){$('file').value='incident.txt';$('expected').value='status=fixed';$('command').value='node_test'}$('notice').textContent=demo?'Simulation mode is deliberately fake AI. The demo verifies actual file state; it does not use Kimi, Cerebras, or OpenClaw and is not a prize-eligible submission.':'OpenClaw must already be installed and configured. Your chosen provider runs through the real OpenClaw CLI; use only a safe, disposable workspace.'}
-document.querySelectorAll('.mode').forEach(el=>el.addEventListener('click',()=>switchMode(el.dataset.mode)));
-$('run').addEventListener('click',async()=>{const data={mode,task:$('task').value,file:$('file').value,expected:$('expected').value,command:$('command').value};$('run').disabled=true;$('run').textContent='◌ Running & checking evidence…';try{const response=await fetch('/api/runs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const json=await response.json();if(!response.ok)throw Error(json.error||'Failed');runs.unshift(json.run);updateStats();renderHistory();showReceipt(json.run);toast(json.run.verdict==='verified'?'Independent checks passed — VERIFIED':'Independent evidence did not fully pass');}catch(e){toast(`Could not run trial: ${e.message}`)}finally{$('run').disabled=false;$('run').innerHTML='⚖ &nbsp; Run agent + verify evidence &nbsp; →';}});
-$('download').addEventListener('click',()=>{if(!current)return;const url=URL.createObjectURL(new Blob([JSON.stringify(current,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`clawcourt-${current.id.slice(0,8)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),500)});
-$('copy').addEventListener('click',async()=>{if(!current)return;const s=`ClawCourt #${current.id.slice(0,8)}\nVerdict: ${current.verdict}\nEvidence: ${current.acceptance.count}/${current.acceptance.total} checks passed\nProvider: ${current.agent.provider||'unknown'}\nSimulation: ${current.agent.simulated?'YES':'NO'}\n${current.acceptance.results.map(r=>`${r.passed?'PASS':'FAIL'}: ${r.label}`).join('\n')}`;try{await navigator.clipboard.writeText(s);toast('Receipt summary copied')}catch{toast('Clipboard not available')}});
-(async()=>{try{const [h,history]=await Promise.all([fetch('/api/health').then(x=>x.json()),fetch('/api/runs').then(x=>x.json())]);$('stat-workspace').textContent=h.workspace.split('/').slice(-1)[0]||'playground';if(!h.demoEnabled){$('modes').querySelectorAll('button:not([data-mode="openclaw"])').forEach(el=>{el.disabled=true;el.style.opacity='.35'});switchMode('openclaw')}runs=history.runs||[];updateStats();renderHistory();if(runs.length)showReceipt(runs[0]);}catch(e){toast('Server connection failed: '+e.message)}})();
-</script>
-</body></html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#080e1b" />
+    <title>ClawCourt — Evidence over claims</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="seal">⚖</div>
+          <div><strong>ClawCourt</strong><span>EVIDENCE FIRST</span></div>
+        </div>
+        <nav aria-label="Workspace">
+          <a class="navitem active" href="#new-trial" aria-label="New trial"
+            >＋ <span>New trial</span></a
+          >
+          <a class="navitem" href="#receipt" aria-label="Evidence receipt"
+            >✓ <span>Evidence receipt</span></a
+          >
+          <a class="navitem" href="#case-history" aria-label="Run history"
+            >≡ <span>Run history</span></a
+          >
+        </nav>
+      </aside>
+      <main class="main">
+        <section class="hero">
+          <div>
+            <h1>The agent said <em>done.</em><br />We checked.</h1>
+            <p>
+              Compare an OpenClaw agent's report with file fingerprints and
+              acceptance tests. Keep a local receipt for every run.
+            </p>
+          </div>
+          <div class="heroicon" aria-hidden="true">⚖️</div>
+        </section>
+        <section class="stats">
+          <div class="stat">
+            <small>Total receipts</small><strong id="stat-total">0</strong>
+          </div>
+          <div class="stat">
+            <small>Verified receipts</small
+            ><strong id="stat-pass" class="green">0</strong>
+          </div>
+          <div class="stat">
+            <small>Failed or unverified</small
+            ><strong id="stat-fail" class="red">0</strong>
+          </div>
+          <div class="stat">
+            <small>Current workspace</small
+            ><strong id="stat-workspace">Loading…</strong>
+          </div>
+        </section>
+        <div class="content">
+          <section class="panel" id="new-trial">
+            <form id="trial" class="panelpad">
+              <h2 class="section-title">New trial</h2>
+              <p class="sectionhint" id="mode-help">
+                Choose a simulation, verify existing work, or run a configured
+                OpenClaw agent.
+              </p>
+              <div
+                class="modes"
+                id="modes"
+                role="group"
+                aria-label="Execution mode"
+                aria-describedby="mode-help"
+              >
+                <button
+                  type="button"
+                  class="mode selected"
+                  aria-pressed="true"
+                  data-mode="demo-fail"
+                >
+                  <strong>False claim</strong><small>Simulation</small>
+                </button>
+                <button
+                  type="button"
+                  class="mode"
+                  aria-pressed="false"
+                  data-mode="demo-pass"
+                >
+                  <strong>Fix applied</strong><small>Simulation</small>
+                </button>
+                <button
+                  type="button"
+                  class="mode"
+                  aria-pressed="false"
+                  data-mode="demo-agent-failed"
+                >
+                  <strong>Agent failed</strong><small>Simulation</small>
+                </button>
+                <button
+                  type="button"
+                  class="mode"
+                  aria-pressed="false"
+                  data-mode="verify"
+                >
+                  <strong>Verify only</strong><small>Existing workspace</small>
+                </button>
+                <button
+                  type="button"
+                  class="mode"
+                  aria-pressed="false"
+                  data-mode="openclaw"
+                >
+                  <strong>OpenClaw</strong><small>Configured provider</small>
+                </button>
+              </div>
+              <label for="task" id="task-label">Agent task</label>
+              <textarea id="task" maxlength="3000" required>
+Fix incident #042 by changing its status to fixed. Report what changed.</textarea
+              >
+              <div class="rowinputs">
+                <div>
+                  <label for="file">Target file (workspace relative)</label
+                  ><input
+                    id="file"
+                    value="incident.txt"
+                    maxlength="250"
+                    spellcheck="false"
+                    required
+                  />
+                </div>
+                <div>
+                  <label for="expected">Required text (case sensitive)</label
+                  ><input
+                    id="expected"
+                    value="status=fixed"
+                    maxlength="3000"
+                    spellcheck="false"
+                    required
+                  />
+                </div>
+              </div>
+              <label for="command">Independent verification command</label
+              ><select id="command">
+                <option value="node_test">node --test</option>
+                <option value="none">File checks only</option>
+                <option value="npm_test">npm test</option>
+                <option value="npm_build">npm run build</option>
+                <option value="git_diff_check">git diff --check</option>
+                <option value="python_pytest">python -m pytest -q</option>
+                <option value="go_test">go test ./...</option>
+                <option value="cargo_test">cargo test</option>
+              </select>
+              <div class="warning" id="notice" aria-live="polite"></div>
+              <button type="submit" class="action" id="run" disabled>
+                Run simulation
+              </button>
+              <p class="sectionhint" id="run-status" role="status"></p>
+            </form>
+          </section>
+          <section class="panel" id="receipt" aria-labelledby="receipt-heading">
+            <div class="receipt-head">
+              <h2 class="section-title" id="receipt-heading">
+                Evidence receipt
+              </h2>
+              <span class="pill" id="kind">AWAITING RUN</span>
+            </div>
+            <div class="verdict">
+              <h3 id="verdict" class="idle" tabindex="-1">Awaiting run</h3>
+              <p id="verdict-detail">
+                A receipt records the checks and the execution outcome.
+              </p>
+            </div>
+            <div class="evidence">
+              <h4 id="evidence-title">Acceptance checklist</h4>
+              <div id="checks">
+                <div class="check">
+                  <div class="checkmark">○</div>
+                  <div>
+                    <strong>Target file exists</strong
+                    ><small>Not checked yet</small>
+                  </div>
+                </div>
+                <div class="check">
+                  <div class="checkmark">○</div>
+                  <div>
+                    <strong>Required content is present</strong
+                    ><small>Not checked yet</small>
+                  </div>
+                </div>
+                <div class="check">
+                  <div class="checkmark">○</div>
+                  <div>
+                    <strong>Independent test command passes</strong
+                    ><small>Not checked yet</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="agentbox" id="receipt-evidence" hidden>
+              <small id="agent-heading">AGENT STATEMENT</small>
+              <p id="agent-text"></p>
+              <p id="agent-error" hidden></p>
+              <div class="meta" id="agent-meta"></div>
+              <details class="meta" id="file-change">
+                <summary id="change-summary">File fingerprints</summary>
+                <dl id="hashes"></dl>
+              </details>
+            </div>
+            <div class="receipt-actions">
+              <button class="quietbtn" id="download" disabled>
+                ↓ Export JSON receipt</button
+              ><button class="quietbtn" id="copy" disabled>
+                ⎘ Copy summary
+              </button>
+            </div>
+          </section>
+        </div>
+        <section class="history" id="case-history">
+          <h2>Case history</h2>
+          <p>
+            Open a case to view or export its evidence. This device keeps up to
+            100 receipts.
+          </p>
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Case</th>
+                  <th>Execution</th>
+                  <th>Verdict</th>
+                  <th>Checks</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="history">
+                <tr>
+                  <td colspan="5">
+                    No evidence receipts yet. Run your first trial above.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <footer class="endnotes">
+          <span>ClawCourt · Local acceptance receipts</span
+          ><span
+            ><a
+              href="https://docs.openclaw.ai/cli/agent"
+              target="_blank"
+              rel="noopener noreferrer"
+              >OpenClaw documentation</a
+            >
+            ·
+            <a href="https://github.com/Ni-zav/clawcourt">Source code</a></span
+          >
+        </footer>
+      </main>
+    </div>
+    <div id="toast" class="toasty" role="status" hidden></div>
+    <script type="module" src="/app.mjs"></script>
+  </body>
+</html>

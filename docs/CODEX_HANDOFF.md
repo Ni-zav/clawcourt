@@ -1,5 +1,7 @@
 # Self-sufficient Codex task — ClawCourt next iteration
 
+This document describes the original scaffold and scope. See [validation](VALIDATION.md) for the current implementation and observed results.
+
 You are working in a fresh `Ni-zav/clawcourt` repository containing a completed, dependency-free Node.js MVP. Inspect all files before editing. Do not ask for routine approvals; implement end-to-end in a feature branch, perform local tests, self-review, and produce a PR if a configured GitHub remote exists. Never push to an unrelated repository. Do not change production or private user files.
 
 ## Current product

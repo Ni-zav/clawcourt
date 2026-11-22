@@ -1,14 +1,16 @@
 {
   "name": "clawcourt",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Evidence-first acceptance testing for OpenClaw agent runs. Works with a keyless local demo.",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node src/server.mjs",
     "test": "node --test src/*.test.mjs",
-    "check": "node --check src/core.mjs && node --check src/openclaw.mjs && node --check src/server.mjs"
+    "check": "node --check public/app.mjs && for file in src/*.mjs; do node --check \"$file\" || exit 1; done"
   },
   "license": "MIT"
 }

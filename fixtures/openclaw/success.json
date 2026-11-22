@@ -1,0 +1,34 @@
+{
+  "ok": true,
+  "status": "ok",
+  "final": "CLAWCOURT_OK.",
+  "payloads": [
+    {
+      "text": "CLAWCOURT_OK.",
+      "mediaUrl": null
+    }
+  ],
+  "usage": {
+    "usageReport": {
+      "state": "available"
+    },
+    "input": 4134,
+    "output": 8,
+    "cacheRead": 483,
+    "cacheWrite": 0,
+    "total": 4625,
+    "cost": {
+      "total": 0
+    }
+  },
+  "costUsd": 0,
+  "codeModeEngaged": false,
+  "assistantTurns": 1,
+  "bridgeCalls": {
+    "search": 0,
+    "describe": 0,
+    "call": 0
+  },
+  "model": "qwen3:0.6b",
+  "provider": "ollama"
+}

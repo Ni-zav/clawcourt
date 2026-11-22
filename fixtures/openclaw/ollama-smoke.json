@@ -1,0 +1,46 @@
+{
+  "agents": {
+    "defaults": {
+      "model": { "primary": "ollama/qwen3:0.6b" },
+      "thinkingDefault": "off",
+      "contextInjection": "never"
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "ollama": {
+        "baseUrl": "http://127.0.0.1:29143",
+        "api": "ollama",
+        "apiKey": "ollama-local",
+        "models": [
+          {
+            "id": "qwen3:0.6b",
+            "name": "Qwen3 0.6B",
+            "reasoning": true,
+            "input": ["text"],
+            "contextWindow": 16384,
+            "maxTokens": 1024
+          }
+        ]
+      }
+    }
+  },
+  "tools": {
+    "profile": "minimal",
+    "alsoAllow": ["read", "write"],
+    "deny": [
+      "exec",
+      "process",
+      "browser",
+      "web_search",
+      "web_fetch",
+      "cron",
+      "gateway",
+      "sessions_spawn",
+      "sessions_send"
+    ],
+    "fs": { "workspaceOnly": true },
+    "codeMode": { "enabled": false }
+  }
+}

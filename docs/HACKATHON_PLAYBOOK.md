@@ -1,13 +1,13 @@
 # Kimi K3.1 Pro × Cerebras × OpenClaw: ClawCourt playbook
 
-Date researched: 22 November 2026, Asia/Jakarta. Source of rules: [official guide](https://docs.google.com/document/d/1Vvf2SjScBt3yBeTVZRoKtOyE7rGEP-gWV_ApzwXepEQ/edit) and Discord announcements provided by the participant. Verify organizer decisions directly on Discord: they can change rules.
+Checked on 22 November 2026 (WIB) against the [official guide](https://docs.google.com/document/d/1Vvf2SjScBt3yBeTVZRoKtOyE7rGEP-gWV_ApzwXepEQ/edit) via its public text export. ClawCourt has a verified OpenClaw run on local Ollama. Kimi K3.1 Pro on Cerebras access, qualifying usage, and submission eligibility remain unverified. Consult the organizers for any team or deadline changes.
 
 ## Eligibility: no substitution
 
 - Capacity application for Kimi K3.1 Pro private preview has closed. Organizer says it cannot accept late requests.
 - To compete for *any* listed prize, OpenClaw **and** Kimi K3.1 Pro **on Cerebras** must be central to the project. Other providers, local Ollama, or mock simulations are not substitutes.
 - A preexisting scaffold is allowed, but substantive core work must occur during the hackathon.
-- Project must be demonstrated in a video <=60 seconds; X post must tag `@Cerebras`, `@Kimi_Moonshot` and `#KimiOnCerebras`. Reddit can be used as an additional audience-choice entry, using r/cerebras hackathon flair.
+- Project must be demonstrated in a video <=60 seconds; X post must tag `@Cerebras`, `@Kimi_Moonshot` and `#KimiOnCerebras`. Reddit can be used as an additional audience-choice entry, with the r/cerebras **Kimi K3.1 Pro Hackathon** flair. The video must show how Cerebras speed benefits the project. Include the project name, team handles, and a short project description.
 - Public X and Reddit demos use **standard** OpenClaw, not the speed patch. The Speed Bounty is a **different task** and not suitable for ClawCourt unless separately implemented with official rules.
 - Submission cutoff is **Sunday Nov 22, 2026 at 10:00 AM PST = Monday Nov 23, 2026 at 1:00 AM WIB**.
 - Prize tally for X and Reddit is on Tuesday Nov 24 at 10:00 AM PST; organic engagement only. No paid boosts, bots, or vote manipulation.
@@ -30,10 +30,10 @@ On a Mac with a supported Ollama installation, an example small local model is:
 ollama pull qwen3.5:4b
 openclaw onboard   # choose Ollama, local-only; verify model supports tools
 openclaw models list --provider ollama
-CLAWCOURT_MODEL=ollama/qwen3.5:4b npm start
+CLAWCOURT_ENABLE_OPENCLAW=1 CLAWCOURT_MODEL=ollama/qwen3.5:4b npm start
 ```
 
-The exact Ollama/OpenClaw installation, available memory, tool support, and performance must be checked on the user's machine. Small models may struggle to edit and verify code; start with the packaged mock demonstration.
+The small `qwen3:0.6b` model was sufficient for ClawCourt’s incident smoke test. See [validation](VALIDATION.md) for versions, context settings, and evidence. Choose a model with suitable tools, context, and memory for your own task.
 
 ## Competition model route — only if authorized
 
@@ -59,17 +59,6 @@ Verify with `openclaw models list --provider cerebras`, and check the official h
 
 If the Kimi/Cerebras requirement is not fulfilled, share a normal open-source launch post instead, without representing it as an eligible entry.
 
-## GitHub publish (requires your own authenticated GitHub CLI)
+## Source repository
 
-After creating the repo in the GitHub UI, or with an authenticated `gh` installation:
-
-```bash
-cd clawcourt
-npm test && npm run check
-git init
-git add .
-git commit -m "feat: ClawCourt acceptance receipts MVP"
-gh repo create Ni-zav/clawcourt --public --source=. --remote=origin --push
-```
-
-If the remote repository exists already, use `git remote add origin <YOUR_URL>` and push the current branch instead. Do not commit `.data/`, `.env`, keys, or captured sensitive receipts.
+Track the open-source project and validation evidence at [Ni-zav/clawcourt](https://github.com/Ni-zav/clawcourt). Keep local receipts, credentials, and configuration secrets out of commits and public demos.

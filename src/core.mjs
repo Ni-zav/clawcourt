@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { constants } from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -13,134 +14,207 @@ export const COMMANDS = Object.freeze({
   go_test: { cmd: 'go', args: ['test', './...'] },
   cargo_test: { cmd: 'cargo', args: ['test'] }
 });
-export const VALID_MODES = Object.freeze(['demo-fail','demo-pass','openclaw']);
-const MAX_STRING = 3000;
+export const DEMO_MODES = ['demo-fail', 'demo-pass', 'demo-agent-failed'];
+const MAX_FILE_BYTES = 2_000_000;
 
 export function redact(input) {
   return String(input ?? '')
-    .replace(/(sk-[A-Za-z0-9_-]{12,})/g, '[REDACTED_API_KEY]')
-    .replace(/((?:api[_-]?key|authorization|token|password)\s*[:=]\s*)["']?[^\s,"']+/gi, '$1[REDACTED]')
+    .replace(/\b(?:sk-|gh[pousr]_|github_pat_)[A-Za-z0-9_-]{12,}/gi, '[REDACTED]')
+    .replace(/\b(?:Bearer|Basic)\s+[A-Za-z0-9._~+\/-]+=*/gi, '[REDACTED]')
+    .replace(/((?:api[_-]?key|authorization|token|password)["']?\s*[:=]\s*)(?:"[^"\r\n]*"|'[^'\r\n]*'|[^\s,;"']+)/gi, '$1[REDACTED]')
     .slice(0, 14000);
 }
 
-export function normalizeRequest(raw) {
-  if (!raw || typeof raw !== 'object') throw new Error('Invalid request body');
-  const text = (value, label, required=false) => {
-    if (typeof value !== 'string' || value.length > MAX_STRING || (required && !value.trim())) throw new Error(`Invalid ${label}`);
-    return value.trim();
-  };
-  const mode = text(raw.mode ?? 'demo-fail', 'mode', true);
-  if (!VALID_MODES.includes(mode)) throw new Error('Invalid execution mode');
-  const task = text(raw.task ?? '', 'task', true);
-  const file = text(raw.file ?? 'incident.txt', 'file', true);
-  const expected = text(raw.expected ?? 'status=fixed', 'expected', true);
-  const command = text(raw.command ?? 'node_test', 'command', true);
-  if (!(command in COMMANDS)) throw new Error('Command is not approved');
-  if (path.isAbsolute(file) || file.includes('\\') || file.split('/').includes('..') || file.startsWith('.')) {
-    throw new Error('Use a relative workspace file path without traversal');
+function fileParts(file) {
+  const parts = file.split('/');
+  if (path.isAbsolute(file) || /[\\:\x00-\x1f\x7f]/.test(file) ||
+      parts.some(part => !part || part.startsWith('.'))) {
+    throw new Error('Use a relative workspace file path without traversal or hidden components');
   }
+  return parts;
+}
+
+export function normalizeRequest(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Invalid request body');
+  const text = (value, label, max = 3000) => {
+    if (typeof value !== 'string' || value.length > max || !value.trim()) throw new Error(`Invalid ${label}`);
+    return value;
+  };
+  const mode = text(raw.mode ?? 'demo-fail', 'mode');
+  if (![...DEMO_MODES, 'openclaw', 'verify'].includes(mode)) throw new Error('Invalid execution mode');
+  const task = text(raw.task ?? (mode === 'verify' ? 'Verify existing workspace' : ''), 'task').trim();
+  const file = text(raw.file ?? 'incident.txt', 'file', 250);
+  const expected = text(raw.expected ?? 'status=fixed', 'expected');
+  const command = text(raw.command ?? (DEMO_MODES.includes(mode) ? 'node_test' : 'none'), 'command');
+  if (!Object.hasOwn(COMMANDS, command)) throw new Error('Command is not approved');
+  fileParts(file);
   return { mode, task, file, expected, command };
 }
 
-/** Snapshot file fingerprints only, never full file contents. Symlinks outside workspace are rejected. */
-export async function snapshotFile(workspace, file) {
-  const root = await fs.realpath(workspace);
-  const target = path.resolve(root, file);
-  if (!(target === root || target.startsWith(root + path.sep))) throw new Error('Path escaped workspace');
+// Use one bounded read for both the fingerprint and the content comparison.
+export async function inspectFile(workspace, file, expected) {
+  const parts = fileParts(file);
+  let target = await fs.realpath(workspace);
+  let handle;
   try {
-    const real = await fs.realpath(target);
-    if (!(real === root || real.startsWith(root + path.sep))) throw new Error('Symlink escaped workspace');
-    const stat = await fs.stat(real);
-    if (!stat.isFile()) return {exists: false};
-    const data = await fs.readFile(real);
-    return {exists: true, sha256: createHash('sha256').update(data).digest('hex'), bytes: data.length};
+    let entry;
+    for (const part of parts) {
+      target = path.join(target, part);
+      entry = await fs.lstat(target);
+      if (entry.isSymbolicLink()) throw new Error('Symlink escaped or is blocked by workspace policy');
+    }
+    if (!entry.isFile()) return { snapshot: { exists: false }, detail: 'Target is not a regular file' };
+    handle = await fs.open(target, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+    const stat = await handle.stat();
+    if (!stat.isFile() || stat.nlink !== 1) throw new Error('Target must be a regular file without hard links');
+    if (stat.size > MAX_FILE_BYTES) throw new Error('Target exceeds the 2 MB evidence limit');
+    const buffer = Buffer.alloc(stat.size + 1);
+    let length = 0;
+    while (length < buffer.length) {
+      const { bytesRead } = await handle.read(buffer, length, buffer.length - length, length);
+      if (!bytesRead) break;
+      length += bytesRead;
+    }
+    const final = await handle.stat();
+    if (length !== stat.size || stat.mtimeMs !== final.mtimeMs || stat.ctimeMs !== final.ctimeMs) {
+      throw new Error('Target changed while evidence was being read');
+    }
+    const data = buffer.subarray(0, length);
+    return {
+      snapshot: { exists: true, sha256: createHash('sha256').update(data).digest('hex'), bytes: length },
+      matched: expected !== undefined && data.includes(Buffer.from(expected))
+    };
   } catch (err) {
-    if (err.code === 'ENOENT') return {exists: false};
+    if (err.code === 'ENOENT' || err.code === 'ENOTDIR') return { snapshot: { exists: false }, detail: 'Target file missing' };
     throw err;
+  } finally {
+    await handle?.close();
   }
+}
+
+export async function snapshotFile(workspace, file) {
+  return (await inspectFile(workspace, file)).snapshot;
+}
+
+function fileChecks(evidence, file) {
+  return [
+    { label: 'Target file exists', passed: evidence.snapshot.exists === true, detail: evidence.detail ?? redact(file) },
+    { label: 'Required text found in file', passed: evidence.matched === true,
+      detail: evidence.detail ?? (evidence.matched ? 'Exact text found' : 'Required text missing') }
+  ];
 }
 
 export async function verifyFile({ workspace, file, expected }) {
-  const target = path.resolve(workspace, file);
-  const root = await fs.realpath(workspace);
-  if (!(target === root || target.startsWith(root + path.sep))) throw new Error('Path escaped workspace');
-  try {
-    const real = await fs.realpath(target);
-    if (!(real === root || real.startsWith(root + path.sep))) throw new Error('Symlink escaped workspace');
-    const stats = await fs.stat(real);
-    if (!stats.isFile()) return [
-      { label: 'Target is a regular file', passed: false, detail: file },
-      { label: 'Expected evidence exists in file', passed: false, detail: 'Not a regular file' }
-    ];
-    const content = (await fs.readFile(real, 'utf8')).slice(0, 2_000_000);
-    return [
-      { label: 'Target file exists', passed: true, detail: file },
-      { label: 'Expected evidence found in file', passed: content.includes(expected), detail: content.includes(expected) ? `Matched ${JSON.stringify(expected)}` : `Missing ${JSON.stringify(expected)}` }
-    ];
-  } catch (err) {
-    if (err.code === 'ENOENT') return [
-      { label: 'Target file exists', passed: false, detail: `${file} not found` },
-      { label: 'Expected evidence found in file', passed: false, detail: 'File missing' }
-    ];
-    throw err;
-  }
+  return fileChecks(await inspectFile(workspace, file, expected), file);
 }
 
-export function spawnBounded(executable, args, { cwd, timeoutMs = 30000, stdin, signal } = {}) {
-  return new Promise((resolve) => {
-    let output = '', error = '', settled = false, timedOut = false;
-    let child;
-    try {
-      child = spawn(executable, args, {cwd, shell: false, stdio: ['pipe','pipe','pipe'], env: process.env, signal});
-    } catch (err) {
-      resolve({exitCode: -1, stdout:'', stderr:err.message, timedOut:false}); return;
+export function spawnBounded(executable, args, { cwd, timeoutMs = 30000, stdin, env = process.env, outputLimit = 500_000 } = {}) {
+  return new Promise(resolve => {
+    const group = process.platform !== 'win32';
+    const child = spawn(executable, args, { cwd, shell: false, detached: group, stdio: ['pipe', 'pipe', 'pipe'], env });
+    const stdout = [], stderr = [];
+    let stdoutBytes = 0, stderrBytes = 0, failure, stopReason, terminationTimer, finished = false;
+    const signal = (name) => {
+      try {
+        if (group && child.pid) process.kill(-child.pid, name);
+        else child.kill(name);
+      } catch (err) {
+        if (err.code !== 'ESRCH') child.kill(name);
+      }
+    };
+    function finish(code) {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      clearTimeout(terminationTimer);
+      resolve({
+        exitCode: code ?? -1, stdout: Buffer.concat(stdout).toString('utf8'),
+        stderr: Buffer.concat(stderr).toString('utf8'), spawnError: failure,
+        timedOut: stopReason === 'timeout', outputExceeded: stopReason === 'output'
+      });
     }
-    let timer = setTimeout(() => { timedOut = true; child.kill('SIGTERM'); }, timeoutMs);
-    child.stdout.on('data', chunk => { output = (output + String(chunk)).slice(-500_000); });
-    child.stderr.on('data', chunk => { error = (error + String(chunk)).slice(-100_000); });
-    child.on('error', err => { error += '\n'+err.message; });
-    child.on('close', code => {
-      if (settled) return; settled = true; clearTimeout(timer);
-      resolve({exitCode: code ?? -1, stdout:output, stderr:error, timedOut});
+    function stop(reason) {
+      if (stopReason) return;
+      stopReason = reason;
+      signal('SIGTERM');
+      terminationTimer = setTimeout(() => {
+        signal('SIGKILL');
+        child.stdout.destroy();
+        child.stderr.destroy();
+        finish(null);
+      }, 1500);
+    }
+    const timer = setTimeout(() => stop('timeout'), timeoutMs);
+    child.stdout.on('data', chunk => {
+      stdoutBytes += chunk.length;
+      if (stdoutBytes <= outputLimit) stdout.push(chunk);
+      else stop('output');
     });
-    if (stdin != null) child.stdin.end(stdin); else child.stdin.end();
+    child.stderr.on('data', chunk => {
+      stderrBytes += chunk.length;
+      if (stderrBytes <= 100_000) stderr.push(chunk);
+      else stop('output');
+    });
+    child.on('error', err => { failure = err.code ?? err.message; });
+    child.on('close', code => {
+      if (stopReason) signal('SIGKILL');
+      finish(code);
+    });
+    child.stdin.on('error', () => {});
+    child.stdin.end(stdin);
   });
 }
 
 export async function verifyCommand(workspace, command) {
   if (command === 'none') return [];
-  const entry = COMMANDS[command];
-  if (!entry) throw new Error('Unsupported verification command');
-  const outcome = await spawnBounded(entry.cmd, entry.args, {cwd:workspace, timeoutMs: 30000});
+  if (!Object.hasOwn(COMMANDS, command)) throw new Error('Unsupported verification command');
+  const { cmd, args } = COMMANDS[command];
+  const env = Object.fromEntries(['PATH', 'HOME', 'USERPROFILE', 'SystemRoot', 'ComSpec', 'TMPDIR', 'TEMP', 'TMP', 'LANG']
+    .filter(key => process.env[key] !== undefined).map(key => [key, process.env[key]]));
+  const result = await spawnBounded(cmd === 'node' ? process.execPath : cmd, args, { cwd: workspace, env });
+  const detail = result.timedOut ? 'Command timed out' :
+    result.outputExceeded ? 'Command exceeded the output limit' :
+    result.spawnError ? `Could not start command (${result.spawnError})` :
+    redact((result.stdout + '\n' + result.stderr).trim()).slice(0, 4200) || `Exit ${result.exitCode}`;
   return [{
-    label: `Independent command: ${entry.cmd} ${entry.args.join(' ')}`,
-    passed: outcome.exitCode === 0 && !outcome.timedOut,
-    detail: redact((outcome.stdout + '\n' + outcome.stderr).trim()).slice(-4200) || `Exit ${outcome.exitCode}`,
-    exitCode: outcome.exitCode,
-    timedOut: outcome.timedOut
+    label: `Independent command: ${cmd} ${args.join(' ')}`,
+    passed: result.exitCode === 0 && !result.timedOut && !result.outputExceeded && !result.spawnError,
+    detail, exitCode: result.exitCode, timedOut: result.timedOut
   }];
 }
 
 export async function verifyAcceptance(workspace, spec) {
-  const results = [
-    ...(await verifyFile({workspace, file: spec.file, expected: spec.expected})),
-    ...(await verifyCommand(workspace, spec.command))
-  ];
-  return { results, passed: results.length > 0 && results.every(r => r.passed), count: results.filter(r=>r.passed).length, total: results.length };
+  const capture = async () => {
+    if (await fs.realpath(workspace) !== workspaceRoot) throw new Error('Workspace path changed during the run');
+    return inspectFile(workspace, spec.file, spec.expected);
+  };
+  const workspaceRoot = spec.workspaceRoot ?? await fs.realpath(workspace);
+  let evidence;
+  let results;
+  try {
+    evidence = await capture();
+    results = fileChecks(evidence, spec.file);
+    results.push(...await verifyCommand(workspace, spec.command));
+    if (spec.command !== 'none') {
+      const afterCommand = await capture();
+      if (changedFile(evidence.snapshot, afterCommand.snapshot)) {
+        evidence = afterCommand;
+        results.push({ label: 'Verification left target unchanged', passed: false, detail: 'The target changed during verification' });
+      }
+    }
+  } catch (err) {
+    evidence = { snapshot: { exists: null } };
+    results = [{ label: 'Read workspace evidence safely', passed: false, detail: redact(err.message) }];
+  }
+  return {
+    results, snapshot: evidence.snapshot, passed: results.every(check => check.passed),
+    count: results.filter(check => check.passed).length, total: results.length
+  };
 }
 
-export function parseOpenclaw(stdout, exitCode) {
-  let data;
-  try { data = JSON.parse(stdout); } catch { throw new Error('OpenClaw did not return JSON. Check your installed CLI version.'); }
-  const ok = exitCode === 0 && data.ok !== false && data.status !== 'error' && data.status !== 'timeout' && !data.error;
-  const answer = data.final ?? data.payloads?.map(x=>x.text).filter(Boolean).join('\n') ?? data.result?.payloads?.map(x=>x.text).filter(Boolean).join('\n') ?? '';
-  return {
-    ok, answer: redact(answer),
-    usage: data.usage ?? data.meta?.agentMeta?.usage ?? null,
-    model: data.model ?? data.meta?.agentMeta?.model ?? null,
-    provider: data.provider ?? data.meta?.agentMeta?.provider ?? null,
-    error: data.error?.message ? redact(data.error.message) : null
-  };
+export function changedFile(before, after) {
+  if (before.exists === null || after.exists === null) return null;
+  return before.sha256 !== after.sha256 || before.exists !== after.exists;
 }
 
 export function gradeRun(agent, acceptance) {

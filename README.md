@@ -1,75 +1,75 @@
-# ClawCourt — put AI agent claims on trial
+# ClawCourt
 
-> **The agent said it's done. The evidence gets the final vote.**
+ClawCourt runs an OpenClaw task, checks the workspace afterward, and records an acceptance receipt. A receipt includes the agent's statement, the checks you chose, and the target file's SHA-256 before and after execution. You can also check work produced by a person, another agent, or CI using **Verify only**.
 
-ClawCourt runs an OpenClaw task, captures the agent's answer, then performs an **independent acceptance check** against actual workspace files, file SHA-256 before/after fingerprints, and a selected test/build command. It assigns a verdict: **VERIFIED**, **UNVERIFIED**, or **AGENT FAILED**, and preserves a shareable local run receipt. Developed as a provider-agnostic project for the November 2026 Cerebras × Moonshot Kimi × OpenClaw community event.
+## Quick start
 
-**Eligibility note:** The event's official prizes require Kimi K3.1 Pro on Cerebras as a central component, plus OpenClaw. The offline simulator and any other model are **not** prize-eligible substitutes. We do not claim Cerebras/Kimi usage or speed measurements.
+ClawCourt needs Node.js 20 or newer and has no npm dependencies.
 
-## Run in 30 seconds — zero API keys
-
-Requirements: Node.js >=20. No `npm install` needed.
-
-```bash
+```sh
 npm start
-# open http://127.0.0.1:4173
 ```
 
-Click **Simulate false claim**, then **Run agent + verify**. The simulated agent claims the incident was fixed, but independent file and `node --test` checks fail. Next choose **Simulate real fix**: the fixture is really changed and tests pass. The UI explicitly flags simulations; no inference occurs.
+Open [ClawCourt on loopback](http://127.0.0.1:4173). Each simulation starts with a fresh copy of the incident fixture and checks the actual file and test exit code.
 
-```bash
+| Simulation | Acceptance | Verdict |
+| --- | --- | --- |
+| False claim | File exists with the wrong text. Test fails. | Unverified |
+| Fix applied | File changes. Required text and test pass. | Verified |
+| Agent failed | File starts fixed and all checks pass. | Agent failed |
+
+Simulations carry **SIMULATED · NO AI** in the UI, clipboard summary, and receipt. They run without credentials, network access, or an installed OpenClaw CLI.
+
+## Check your own work
+
+```sh
+CLAWCOURT_WORKSPACE=/absolute/path/to/disposable-checkout npm start
+```
+
+Choose **Verify only** and enter a workspace-relative regular file plus a case-sensitive text fragment. This mode can verify existing work before a review or release. Use **Export JSON receipt** to share the findings after checking the receipt for sensitive data.
+
+The file check searches for the exact text anywhere in the file. For stronger evidence, enable a reviewed test or build command with `CLAWCOURT_ALLOW_WORKSPACE_COMMANDS=1`, then choose it in the form. Test suites and build scripts can execute repository code, so use a trusted, disposable checkout and review acceptance logic before relying on the verdict.
+
+## Run OpenClaw with a configured provider
+
+Install a version that supports `openclaw agent exec`. The [OpenClaw CLI documentation](https://docs.openclaw.ai/cli/agent#agent-exec) and its local `--help` list the flags available in your version. ClawCourt was tested with 2026.11.6. OpenClaw has its own Node.js requirements.
+
+1. Configure a provider and tool policy in OpenClaw. For keyless local inference, use the [Ollama setup guide](https://docs.openclaw.ai/providers/ollama/setup). Use at least 16K of model context for the tested Ollama setup.
+2. Start ClawCourt with OpenClaw enabled. Specify an optional model OpenClaw already knows, or omit it to use OpenClaw's default.
+
+   ```sh
+   CLAWCOURT_ENABLE_OPENCLAW=1 \
+   CLAWCOURT_MODEL=ollama/qwen3:0.6b \
+   npm start
+   ```
+
+3. Choose **OpenClaw**, start with the incident task and **File checks only**, then inspect the receipt. A default run uses a temporary copy of the fixture. Set `CLAWCOURT_WORKSPACE` to retain agent changes in a disposable checkout you control.
+
+ClawCourt sends the task via stdin to `openclaw agent exec --message-file - --cwd <workspace> --json --timeout 180`. The optional `CLAWCOURT_OPENCLAW_CONFIG` selects an absolute path to a pinned config. `CLAWCOURT_OPENCLAW_BIN` selects a local binary. `CLAWCOURT_MODEL` and comma-separated `CLAWCOURT_FALLBACKS` map to OpenClaw's model and ordered fallback flags. Provider credentials belong in OpenClaw's configuration or environment.
+
+An **OPENCLAW CLI** receipt records a launched process, its elapsed wall time, and any provider, model, or usage the CLI reported. An unavailable CLI produces an **OPENCLAW UNAVAILABLE** receipt. Older saved receipts without provenance are labeled historical or simulated. A successful agent run becomes **Verified** only if the selected acceptance checks also pass.
+
+### Optional Cerebras route
+
+With authorized access, configure the [OpenClaw Cerebras provider](https://docs.openclaw.ai/providers/cerebras), validate the model by running it via OpenClaw, and select it through `CLAWCOURT_MODEL`. The preview model reference to validate is `cerebras/moonshotai-kimi-k3.1-pro-trial`. Availability depends on the authorized organization and provider catalog.
+
+This project demonstrated local Ollama inference. A prize claim requires the official Kimi K3.1 Pro on Cerebras workflow and a compliant submission. See the [hackathon playbook](docs/HACKATHON_PLAYBOOK.md).
+
+## Boundaries and receipts
+
+- ClawCourt binds to loopback, checks the host and request origin, and runs one trial at a time. Run one ClawCourt server per checkout and receipt store.
+- A workspace path limits ClawCourt's file inspection. OpenClaw tools and workspace commands run with their own local permissions. Use a separate OS account, container, or VM for untrusted work.
+- ClawCourt rejects hidden path components, symlinks, hard links, and target files over 2 MB. A failed or timed-out command fails its acceptance check. A command that changes the target during verification also fails acceptance.
+- Treat receipts as local evidence for the selected checks. Review test changes, consider pre-existing evidence, and verify the diff independently before accepting work. The receipt exposes unchanged fingerprints when a criterion already held.
+- The last 100 receipts live in `.data/runs.json` and may include tasks, acceptance criteria, replies and test output. Redaction catches common patterns. Keep secrets out of inputs and inspect exports before sharing. Remove `.data/runs.json` with the server stopped to clear history.
+
+## Development
+
+```sh
 npm test
 npm run check
 ```
 
-## Connect a real OpenClaw agent (optional)
+The HTTP integration tests use ephemeral loopback ports and temporary receipt stores. See [validation and remaining work](docs/VALIDATION.md) for live, offline, and browser evidence.
 
-1. Install and configure [OpenClaw](https://docs.openclaw.ai/), with any provider or local model OpenClaw supports.
-2. Optionally export `CLAWCOURT_MODEL` for the explicit model to use. If omitted, OpenClaw uses your configured default.
-3. Optionally set `CLAWCOURT_WORKSPACE=/absolute/path/to/safe/test-repo`. Do **not** point at a sensitive production directory. ClawCourt's demo modes are disabled when a custom workspace is selected.
-4. Start ClawCourt, select **Real OpenClaw**, configure the task, relative target file, acceptance phrase, and approved verification command.
-
-It calls the documented headless harness:
-
-```bash
-openclaw agent exec --message-file <temporary-task-file> --cwd <workspace> --json --timeout 180
-```
-
-The real CLI's `ok` envelope reflects agent execution, **not** acceptance; ClawCourt independently verifies the result. ClawCourt does not call an LLM provider HTTP API directly. Provider keys are configured in OpenClaw, not entered into the ClawCourt UI.
-
-Model fallbacks, where supported, can be supplied via `CLAWCOURT_MODEL` and comma-separated `CLAWCOURT_FALLBACKS`, passed as OpenClaw's own `--model/--fallback` flags. This project does not pretend to improve on OpenClaw's built-in failover.
-
-## Security and honesty
-
-- Loopback only (`127.0.0.1`) by default. No cloud, telemetry, login, or secrets stored.
-- Workspace fixed server-side; API clients cannot choose arbitrary roots. Only allowlisted test/build commands; no shell interpolation.
-- Paths are relative and symlink escapes are rejected. Demo modifications are restricted to the packaged fixture.
-- OpenClaw agents still have whatever access your local OpenClaw execution policy allows. Use disposable workspaces; inspect OpenClaw policy before granting file/shell access.
-- A passing acceptance criterion is **not** proof that the requested task is wholly correct. Add stronger tests for high-stakes tasks.
-- Raw user-chosen tasks, model responses, and test output are stored **locally** in `.data/runs.json` for the receipts; avoid sensitive inputs and remove the file to clear history.
-- The `SIMULATED — NO AI` label is permanent on mock runs. Never represent simulated speed, usage, or provider as measured.
-
-## Audience Choice demo script (noncompetitive without approved model)
-
-0–10s: "Your AI agent says DONE. But did it actually do the work?"
-10–22s: Run a simulated false-claim task. Show the claimed success, then the red independent checks.
-22–38s: Run a second simulated actual fix. Independent test passes and verdict turns green.
-38–52s: Show receipts with test evidence and provider/model labels. OpenClaw integration uses the real `agent exec` CLI when configured.
-52–60s: "Trust the evidence, not the sentence. Open source and provider-agnostic." Do not claim competition eligibility unless the required Kimi + Cerebras + OpenClaw demonstration has actually occurred.
-
-## Hackathon links
-- [Official hackathon guide](https://docs.google.com/document/d/1Vvf2SjScBt3yBeTVZRoKtOyE7rGEP-gWV_ApzwXepEQ/edit)
-- [OpenClaw headless agent CLI](https://docs.openclaw.ai/cli/agent)
-- [Cerebras API docs](https://inference-docs.cerebras.ai/api-reference/chat-completions)
-
-## Future development
-- Real GitHub PR diff and revision hash receipts
-- Signed receipts and machine-readable CI integrations
-- Multi-step acceptance plans and policy-gated agent action approval
-- Secure remote web demo through an authenticated gateway (never expose this local server raw)
-
-MIT licensed. See `LICENSE`.
-
-## Next steps and project handoff
-- [Competition participation and submission playbook](docs/HACKATHON_PLAYBOOK.md)
-- [Self-sufficient Codex handoff](docs/CODEX_HANDOFF.md)
+MIT licensed. See [LICENSE](LICENSE).

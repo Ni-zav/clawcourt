@@ -1,19 +1,22 @@
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+export const DEMO_TASK = 'Fix incident #042 by changing its status to fixed. Report what changed.';
+const answers = {
+  'demo-fail': 'Claim: Resolved incident #042 and all tests pass. The simulated agent left the file unchanged.',
+  'demo-pass': 'Claim: Resolved incident #042. The simulated agent updated the file.',
+  'demo-agent-failed': 'The simulated agent stopped before making any changes.'
+};
+
+export const fixedIncident = 'INCIDENT #042\nstatus=fixed\ncause=Unverified completion reports\n';
+
 export async function runDemo(spec, workspace) {
-  // Deliberately restricted to the packaged example. Never rewrite user workspaces.
-  if (process.env.CLAWCOURT_WORKSPACE) throw new Error('Demo mutation is disabled for custom workspaces');
-  if (spec.file !== 'incident.txt' || spec.expected !== 'status=fixed') {
-    throw new Error('For the mock scenario, use incident.txt and status=fixed');
+  if (spec.mode === 'demo-pass') {
+    await writeFile(path.join(workspace, 'incident.txt'), fixedIncident);
   }
-  await writeFile(path.join(workspace, 'incident.txt'),
-    `INCIDENT #042\nstatus=${spec.mode === 'demo-pass' ? 'fixed':'broken'}\ncause=Unverified completion reports\n`);
   return {
-    ok:true, mode:spec.mode, simulated:true, model:'Simulated agent (NO AI)',provider:'offline-demo',durationMs:180,
-    answer: spec.mode === 'demo-pass'
-      ? 'Claim: Resolved incident #042. The file was updated. Independent tests should confirm the change.'
-      : 'Claim: Resolved incident #042 and all tests pass. No changes were actually made. (Intentionally unreliable simulation.)',
-    usage:null,error:null
+    ok: spec.mode !== 'demo-agent-failed', simulated: true,
+    answer: answers[spec.mode], provider: null, model: null, usage: null, durationMs: null,
+    error: spec.mode === 'demo-agent-failed' ? 'Simulated agent failure' : null
   };
 }
