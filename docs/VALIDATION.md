@@ -66,9 +66,21 @@ curl --fail-with-body http://127.0.0.1:4173/api/runs \
 
 Inspect the returned receipt and run `node --test` in the temporary workspace. A small model can give different results between runs.
 
+### Trial on the ClawCourt source repository
+
+Using disposable clones of commit `53ef769`, asked OpenClaw with local Ollama `qwen3:0.6b` to change one label in `public/index.html`. A verification-only baseline passed 2/3 checks because the target text was still absent. In the first agent run, the model replaced the entire page with the new label. ClawCourt returned **Verified** because the substring check and all 20 tests passed. A Git diff exposed the 260 removed lines. This demonstrates a gap in the chosen acceptance checks.
+
+Retried in a clean clone with OpenClaw's `edit` tool enabled and `write` denied. ClawCourt passed 3/3 checks, including all 20 tests. An independent comparison against `git show HEAD:public/index.html` confirmed that the requested label was the only change. The agent edits stayed in the disposable clones.
+
+### Read-only MCP tool trial
+
+Configured a temporary stdio MCP server in OpenClaw that returned a generated case ID. With default Tool Search, the small model discovered the tool and ended the turn before calling it. On retry with `tools.toolSearch: false`, ClawCourt's OpenClaw adapter used the same local Ollama model, the MCP server logged a tool call, and the model's answer contained the generated ID. This checks one read-only tool through the adapter. Configure tool permissions in OpenClaw. [OpenClaw MCP setup](https://docs.openclaw.ai/tools/mcp)
+
 ## Limits and remaining work
 
+- Show the Git diff and base revision before users accept a run, and support acceptance checks pinned outside the agent's writable tree.
+- Add folder import or a workspace picker that creates a disposable copy, plus clearer setup in the browser. Test the workflow on Linux, Windows, and with assistive technology.
+- Consider a ClawCourt MCP interface for verification and receipt retrieval so other agents can discover those functions directly.
 - Live provider coverage is local Ollama. Cloud providers and the private Kimi/Cerebras model remain untested. The CLI's reported provider and model identify the observed run. They carry no independent provider attestation.
 - Local defenses reduce accidental exposure. The server and arbitrary workspace processes are not an isolation boundary against a hostile same-user process or concurrent filesystem replacement. Use OS isolation for untrusted repositories. ClawCourt's busy guard and JSON history assume one server instance per store.
-- The accepted suite can still contain weak or agent-edited checks. Future work includes separately pinned acceptance suites, Git revision and diff evidence, and automated test coverage on Linux and Windows.
 - The official guide requires OpenClaw and Kimi K3.1 Pro on Cerebras as core components, substantive core work during the event, a demo up to 60 seconds demonstrating Cerebras speed, and a correctly tagged X post by Sunday 22 November at 10:00 a.m. PT (Monday 23 November at 1:00 a.m. WIB). An authorized preview run and a qualifying submission are outstanding. No hackathon submission or Speed Bounty benchmark was made. See the [official guide](https://docs.google.com/document/d/1Vvf2SjScBt3yBeTVZRoKtOyE7rGEP-gWV_ApzwXepEQ/edit) and [playbook](HACKATHON_PLAYBOOK.md).
